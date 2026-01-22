@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800;900&family=Pattaya&family=Playfair+Display:wght@700;900&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <style>
+    :root { --navy: #0f253e; --gold: #ffcc00; --dark: #0a1a2b; --card-bg: #1a2c42; --primary: #154295; }
+    
+    body { 
+        background: var(--navy); 
+        color: white; 
+        font-family: 'Montserrat', sans-serif; 
+        overflow-x: hidden; 
+        padding-top: 110px !important; 
+    }
+    
+    .navbar { 
+        background: var(--dark); 
+        border-bottom: 2px solid var(--gold); 
+        padding: 8px 0; 
+        z-index: 10000 !important; 
+    }
+    
+    .navbar-brand img { height: 60px; margin-right: 15px; }
+    
+    .nav-link { 
+        color: white !important; 
+        font-weight: 800 !important; 
+        cursor: pointer; 
+        text-transform: uppercase; 
+        font-size: 1.05rem !important; 
+        margin: 0 15px !important; 
+        letter-spacing: 1px; 
+    }
+
+    .stat-card { 
+        background: rgba(255, 255, 255, 0.05); 
+        border-radius: 15px; 
+        padding: 20px; 
+        text-align: center; 
+        border: 1px solid rgba(255,204,0,0.3); 
+        transition: 0.3s;
+    }
+    .stat-card:hover { border-color: var(--gold); background: rgba(255, 255, 255, 0.08); }
+    .stat-number { font-size: 2.8rem !important; font-weight: 900; color: var(--gold); }
+    .stat-label { font-size: 0.7rem; letter-spacing: 1px; color: #a0aec0; font-weight: bold; }
+
+    .vn-map-wrapper {
+        position: relative;
+        background: rgba(255,255,255,0.02);
+        border-radius: 20px;
+        padding: 15px;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    .vn-map-img { width: 100%; height: auto; display: block; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
+
+    .vn-pin {
+        position: absolute;
+        width: 12px; height: 12px;
+        background: #ff4d4d;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        cursor: pointer;
+        z-index: 10;
+        box-shadow: 0 0 10px #ff4d4d;
+        transition: 0.3s;
+    }
+    .vn-pin:hover { transform: translate(-50%, -50%) scale(1.8); background: var(--gold); box-shadow: 0 0 15px var(--gold); z-index: 100; }
+    .vn-pin::after {
+        content: attr(data-info);
+        position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+        background: var(--dark); color: white; padding: 4px 10px; border-radius: 5px;
+        font-size: 10px; white-space: nowrap; display: none; z-index: 101; border: 1px solid var(--gold);
+    }
+    .vn-pin:hover::after { display: block; }
+
+    .top-list-container {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 15px;
+        padding: 20px;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    #stats table td { padding: 12px 10px !important; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+    .top-list-container {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 20px;
+        padding: 20px;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    #stats table tr {
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    #stats table td {
+        padding: 15px 10px !important; 
+        vertical-align: middle;
+    }
+    #stats table tr:last-child { border-bottom: none; }
+
+    .table-title {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--gold);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-transform: uppercase;
+    }
+
+    .page { display: none; padding-bottom: 80px; }
+    .page-active { display: block; animation: fadeIn 0.5s ease; }
+    @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+    
+    .map-container { position: relative; max-width: 900px; margin: 0 auto; border: 5px solid rgba(255,204,0,0.3); border-radius: 20px; overflow: hidden; }
+    .map-img { width: 100%; display: block; }
+
+    .map-hotspot {
+        position: absolute; 
+        width: 22px; height: 22px; 
+        background: rgba(255, 204, 0, 0.1); 
+        border: 1px solid rgba(255, 255, 255, 0.4); 
+        border-radius: 50%; 
+        cursor: pointer; 
+        z-index: 10;
+        transform: translate(-50%, -50%); 
+        opacity: 0; 
+        transition: all 0.4s ease-in-out;
+    }
+
+    .map-hotspot:hover {
+        opacity: 1; 
+        width: 58px; height: 58px; 
+        background: rgba(255, 204, 0, 0.15); 
+        border: 1px solid #fff; 
+        box-shadow: 0 0 25px rgba(255, 204, 0, 0.8);
+    }
+
+    .map-hotspot::after {
+        content: ''; position: absolute; width: 100%; height: 100%; border-radius: 50%;
+        border: 1px solid var(--gold); animation: pulse-map 2s infinite; left: -1px; top: -1px; opacity: 0;
+    }
+    .map-hotspot:hover::after { opacity: 1; }
+
+    @keyframes pulse-map { 
+        0% {transform: scale(1); opacity: 1;} 
+        100% {transform: scale(2.2); opacity: 0;} 
+    }
+
+    .fingerprint-btn { margin-top: 2px; display: inline-block; cursor: pointer; transition: 0.3s; }
+    .fingerprint-icon {
+        font-size: 5.5rem; color: var(--gold); display: block;
+        filter: drop-shadow(0 0 8px rgba(200, 180, 0, 0.5));
+        animation: finger-pulse 2.5s infinite;
+    }
+    .finger-text { display: block; color: var(--gold); font-weight: 800; letter-spacing: 2px; margin-top: 6px; font-size: 0.9rem; }
+    @keyframes finger-pulse {
+        0% { transform: scale(1); opacity: 0.8; }
+        50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 25px var(--gold)); }
+        100% { transform: scale(1); opacity: 0.6; }
+    }
+
+    .timeline-container {
+        position: relative;
+        max-width: 1000px;
+        margin: 40px auto;
+        padding: 20px 0;
+    }
+
+    .timeline-container::after {
+        content: '';
+        position: absolute;
+        width: 4px;
+        background: var(--gold);
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        margin-left: -2px;
+        box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+    }
+
+    .timeline-item {
+        padding: 10px 40px;
+        position: relative;
+        width: 50%;
+        box-sizing: border-box;
+    }
+
+    .timeline-node {
+        position: absolute;
+        width: 25px;
+        height: 25px;
+        right: -10px;
+        background-color: var(--gold);
+        border: 4px solid #fff;
+        top: 50px;
+        border-radius: 50%;
+        z-index: 1;
+        box-shadow: 0 0 15px var(--gold);
+    }
+
+    .timeline-item.right .timeline-node {
+        left: -10px;
+    }
+
+    .timeline-item.left { left: 0; text-align: right; }
+    .timeline-item.right { left: 50%; text-align: left; }
+
+    .timeline-date {
+        font-weight: 900;
+        color: var(--gold);
+        font-size: 1.2rem;
+        margin-bottom: 8px;
+        display: block;
+        letter-spacing: 1px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .timeline-card {
+        background: #fff;
+        color: #333;
+        padding: 25px;
+        border-radius: 5px;
+        position: relative;
+        box-shadow: 10px 10px 30px rgba(0,0,0,0.3);
+        border-left: 8px solid #d32f2f; 
+        text-align: left;
+        background-image: linear-gradient(#e5e5e5 1px, transparent 1px);
+        background-size: 100% 1.8em;
+        line-height: 1.8em;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    .timeline-card:hover { transform: scale(1.02); }
+
+    .timeline-card .ship-stamp {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 3rem;
+        color: rgba(211, 47, 47, 0.15);
+        transform: rotate(15deg);
+    }
+
+    .timeline-card .info-header {
+        font-weight: bold;
+        color: #154295;
+        border-bottom: 1px dashed #ccc;
+        padding-bottom: 8px;
+        margin-bottom: 10px;
+        font-size: 0.95rem;
+    }
+    
+    .timeline-card {
+        padding: 25px !important;
+        padding-right: 100px !important; 
+        padding-bottom: 15px !important; 
+        min-height: 180px; 
+        background-size: 100% 2.2em; 
+        line-height: 2.2em;
+        position: relative;
+        border-radius: 8px;
+    }
+
+    .custom-search-box {
+        max-width: 600px;
+        margin: 0 auto 50px;
+    }
+    .custom-search-box input {
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid var(--gold);
+        border-radius: 30px;
+        color: var(--gold) !important;
+        padding: 12px 25px;
+        text-align: center;
+    }
+    .custom-search-box input::placeholder {
+        color: rgba(255, 204, 0, 0.5);
+    }
+
+    @media screen and (max-width: 768px) {
+        .timeline-container::after { left: 31px; }
+        .timeline-item { width: 100%; padding-left: 70px; padding-right: 30px; }
+        .timeline-item.right { left: 0; }
+        .timeline-item.left { text-align: left; }
+        .timeline-node { left: 21px !important; }
+    }
+
+    .diary-page-header {
+        text-align: center;
+        margin-bottom: 40px;
+        margin-top: 20px;
+    }
+    .diary-page-header h2 {
+        font-size: 3.8rem;
+        font-weight: 900;
+        color: var(--gold);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-shadow: 4px 4px 0px rgba(0,0,0,0.3);
+        margin-bottom: 5px;
+    }
+    .diary-page-header p {
+        font-family: 'Pattaya', sans-serif;
+        font-size: 1.4rem;
+        color: #cbd5e0;
+        font-style: italic;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .timeline-container {
+        max-width: 1500px; 
+        margin: 40px auto;
+    }
+
+    .timeline-card {
+        padding-right: 100px !important; 
+        min-height: 160px; 
+        background-size: 100% 2em; 
+        line-height: 2em;
+    }
+
+    #modalDetail .modal-dialog {
+        max-width: 1100px; 
+    }
+
+    .paper-post {
+        background: #fff;
+        padding: 30px !important;
+        border-radius: 20px;
+        color: #333;
+        border-top: none; 
+        box-shadow: 0 25px 80px rgba(0,0,0,0.4);
+    }
+
+    .detail-author-name {
+        font-family: 'Playfair Display', serif;
+        font-weight: 900;
+        font-size: 2.2rem;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+
+    .detail-meta-row {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        margin-bottom: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    .detail-meta-row i { color: #d32f2f; }
+
+    .detail-media-box {
+        width: 100%;
+        background: #fdfcf0;
+        border-radius: 15px;
+        margin-bottom: 25px;
+        position: relative;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+
+    .detail-img-fit {
+        width: 100%;
+        height: auto;
+        max-height: 80vh; 
+        object-fit: contain;
+        display: block;
+        transition: transform 0.3s ease;
+    }
+
+    .rotate-btn {
+        position: absolute;
+        bottom: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(255,255,255,0.9);
+        border: 1px solid #ccc;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        cursor: pointer;
+        z-index: 5;
+    }
+
+    .detail-body-text {
+        font-size: 1.15rem;
+        line-height: 1.8;
+        text-align: justify;
+        color: #444;
+        white-space: pre-line;
+    }
+
+    .big-heart-btn {
+        background: #fff;
+        border: 2px solid #ff4d4d;
+        color: #ff4d4d;
+        padding: 12px 40px;
+        border-radius: 30px;
+        font-weight: 800;
+        font-size: 1.2rem;
+        margin: 30px auto;
+        display: block;
+        transition: 0.3s;
+    }
+    .big-heart-btn:hover {
+        background: #ff4d4d;
+        color: #fff;
+        transform: scale(1.05);
+    }
+
+    .comment-section-v2 {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 15px;
+        margin-top: 30px;
+    }
+
+    .diary-lined-paper {
+        background-image: linear-gradient(#e5e5e5 1px, transparent 1px) !important;
+        background-size: 100% 2.4rem !important;
+        line-height: 2.4rem !important;
+        background-position: 0 2.15rem !important; 
+        padding: 25px !important;
+        padding-top: 0 !important;
+        margin-top: 0.25rem !important; 
+        font-size: 1.2rem !important;
+        color: #2c3e50;
+        text-align: justify;
+        white-space: pre-line;
+        min-height: 150px !important; 
+        height: auto !important;      
+    }
+
+    #detTitle {
+        font-family: 'Playfair Display', serif;
+        font-weight: 900;
+        font-size: 2.5rem;
+        color: var(--navy);
+        margin-bottom: 10px;
+    }
+
+    .modal-ship-stamp {
+        position: absolute;
+        bottom: 40px;
+        right: 50px;
+        font-size: 8rem;
+        color: rgba(211, 47, 47, 0.05);
+        transform: rotate(-15deg);
+        pointer-events: none;
+    }
+
+    .creative-card {
+        background: #ffffff; 
+        border-radius: 15px;
+        padding: 15px;
+        position: relative;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        overflow: hidden;
+        color: #333 !important;
+        border: 3px solid #ffcc00; 
+        box-shadow: 0 0 15px rgba(255, 204, 0, 0.3), inset 0 0 10px rgba(255, 204, 0, 0.1); 
+    }
+
+    .creative-card:hover {
+        transform: translateY(-12px) scale(1.02); 
+        border: 4px solid #ffdd44; 
+        box-shadow: 0 0 25px #ffcc00, 0 0 50px rgba(255, 204, 0, 0.6), 0 0 80px rgba(255, 204, 0, 0.3), inset 0 0 15px rgba(255, 204, 0, 0.4); 
+        z-index: 100; 
+    }
+
+    .creative-card .badge {
+        box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+        border: 1px solid var(--gold);
+    }
+
+    .creative-card::before {
+        content: 'TRƯỜNG SA';
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 60px;
+        height: 60px;
+        border: 2px dashed rgba(211, 47, 47, 0.3);
+        border-radius: 50%;
+        color: rgba(211, 47, 47, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.6rem;
+        font-weight: bold;
+        transform: rotate(15deg);
+        z-index: 1;
+    }
+
+    .creative-card .badge {
+        background: var(--navy) !important;
+        color: var(--gold) !important;
+        border-radius: 5px;
+    }
+
+    .creative-card h6 {
+        color: var(--navy);
+        font-weight: 800;
+    }
+
+    .timeline-card {
+        background: #fdfcf0 !important; 
+        border-left: 15px solid #d32f2f !important; 
+        border-right: 5px solid #154295 !important; 
+        border-radius: 10px !important;
+        padding: 25px !important;
+        position: relative;
+        background-image: radial-gradient(#d1d1d1 1px, transparent 1px) !important;
+        background-size: 20px 20px !important; 
+    }
+
+    .timeline-card::after {
+        content: '❤';
+        position: absolute;
+        bottom: 10px;
+        right: 15px;
+        color: #ff4d4d;
+        font-size: 1.2rem;
+        opacity: 0.6;
+    }
+
+    .heart-btn {
+        background: rgba(255, 77, 77, 0.1);
+        border: 1px solid #ff4d4d;
+        color: #ff4d4d;
+        border-radius: 20px;
+        padding: 3px 12px;
+        transition: 0.3s;
+    }
+
+    .heart-btn:hover {
+        background: #ff4d4d;
+        color: white;
+    }
+
+    .detail-img {
+        max-width: 100%;    
+        height: auto;       
+        max-height: 65vh;   
+        object-fit: contain; 
+        display: block;
+        margin: 0 auto;     
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+        border: 3px solid #fff; 
+    }
+
+    #detMedia {
+        width: 100%;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #f8f9fa; 
+        border-radius: 10px;
+    }
+
+    .timeline-date {
+        background: var(--gold);
+        color: var(--navy);
+        display: inline-block;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem !important;
+        margin-bottom: 15px !important;
+    }
+
+    .pdf-lock-container {
+        position: relative;
+        width: 100%;
+        height: 80vh;
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #eee;
+    }
+
+    .pdf-mask-overlay {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 120px; 
+        height: 60px;  
+        background: transparent;
+        z-index: 100;
+        cursor: default;
+    }
+
+    .pdf-viewer-fixed {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    .media-wrapper {
+        position: relative;
+        width: 100%;
+        background: #f4f4f4;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .video-wrapper {
+        position: relative;
+        padding-bottom: 56.25%; 
+        height: 0;
+    }
+    .video-wrapper iframe {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+    }
+
+    .drive-mask {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 55px; 
+        background: transparent;
+        z-index: 10;
+        pointer-events: auto; 
+        cursor: default;
+    }
+
+    #islandModal .modal-content {
+        border-radius: 20px;
+        border: none;
+        padding: 25px;
+        background-color: #fff;
+        box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+    }
+
+    .modal-title-custom {
+        color: #154295; 
+        font-weight: 700;
+        text-decoration: underline;
+        font-size: 1.4rem;
+    }
+
+    .sovereignty-box {
+        position: relative;
+        background: #e62117; 
+        border-radius: 15px;
+        padding: 30px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: 0.3s;
+        margin-top: 15px;
+    }
+
+    .sovereignty-box:hover {
+        transform: scale(1.01);
+        box-shadow: 0 8px 25px rgba(230, 33, 23, 0.4);
+    }
+
+    .sov-star {
+        color: #FFFF00;
+        font-size: 3.5rem;
+        filter: drop-shadow(0 0 15px rgba(255,255,0,0.8));
+        margin-bottom: 10px;
+        animation: star-rotate 6s linear infinite; 
+    }
+
+    @keyframes star-rotate { 
+        from { transform: rotate(0deg); } 
+        to { transform: rotate(360deg); } 
+    }
+
+    .sov-text-1 {
+        color: #FFFF00;
+        font-size: 1.5rem;
+        font-weight: 900;
+        font-family: 'Montserrat', sans-serif;
+        margin-bottom: 5px;
+        letter-spacing: 1px;
+    }
+
+    .sov-text-2 {
+        color: #fff;
+        font-size: 2.2rem;
+        font-weight: 900;
+        font-family: 'Playfair Display', serif;
+        text-transform: uppercase;
+    }
+
+    .sov-btn-play {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        color: #fff;
+        padding: 5px 20px;
+        border-radius: 30px;
+        font-size: 0.85rem;
+        margin-top: 15px;
+        font-weight: bold;
+    }
+
+    .island-desc-italic {
+        font-style: italic;
+        color: #444;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin: 20px 0;
+        padding: 0 5px;
+        text-align: justify;
+    }
+
+    .modal-custom-footer {
+        border-top: 1px solid #eee;
+        padding-top: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        color: #777;
+    }
+
+    .author-blue {
+        color: #007bff;
+        font-weight: 700;
+    }
+
+    #island-info-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0f253e !important; background-image: radial-gradient(circle at 50% 50%, rgba(21, 66, 149, 0.2) 0%, rgba(10, 26, 43, 0) 100%); z-index: 9999; overflow-y: auto; padding-top: 30px; padding-bottom: 100px; }
+    .island-big-title { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 3.5rem; color: #d32f2f; text-shadow: 2px 2px 0px #fff; text-align: right; margin-bottom: 10px; }
+    .island-card { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 25px; color: #333; height: 100%; box-shadow: 0 15px 40px rgba(0,0,0,0.2); }
+    .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 15px; background: #000; }
+    .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0; }
+    .back-btn-float { position: fixed; bottom: 30px; left: 30px; width: 55px; height: 55px; background: #00d2ff; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; z-index: 1045; border: 2px solid #fff; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+    
+    .search-box { max-width: 500px; margin: 0 auto 20px auto; }
+    .search-box .form-control { background: rgba(255,255,255,0.1); border: 1px solid var(--gold); color: white; border-radius: 20px; }
+    .filter-pill { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 6px 18px; margin: 5px; cursor: pointer; display: inline-block; font-size: 0.8rem; }
+    .filter-pill.active { background: var(--gold); color: var(--navy); font-weight: 800; }
+    
+    .paper-post {
+        background: #fff;
+        padding: 25px 35px !important; 
+        position: relative;
+        color: #333;
+        border-radius: 15px;
+        border-top: 10px solid var(--gold);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    
+    .post-meta-custom { font-size: 0.9rem; color: #666; margin-bottom: 15px; border-bottom: 1px dashed #ccc; padding-bottom: 10px; }
+    .response-wave { background: #f0f7ff; border-radius: 15px; padding: 20px; margin-top: 25px; border-left: 5px solid #007bff; }
+    
+    .ship-stamp { position: absolute; top: 15px; right: 20px; font-size: 2.5rem; color: rgba(211, 47, 47, 0.15); transform: rotate(10deg); pointer-events: none; }
+    .book-wrapper { position: relative; margin: 20px auto; padding: 15px; background: #1a1a1a; border: 1px solid #333; box-shadow: 0 20px 60px rgba(0,0,0,1); display: flex; justify-content: center; }
+    #flipbook { width: 1000px; height: 282px; }
+    #flipbook img { width: 100%; height: 100%; object-fit: contain; }
+    .controls { margin-top: 20px; display: flex; gap: 15px; align-items: center; justify-content: center; }
+    .btn-book { padding: 8px 20px; background: transparent; color: var(--gold); border: 1px solid var(--gold); border-radius: 4px; font-weight: bold; }
+    
+    .floating-heart { position: fixed; color: #ff4d4d; pointer-events: none; z-index: 20000; animation: heartFly 1.5s ease-out forwards; text-shadow: 0 0 10px rgba(255,77,77,0.5); }
+    @keyframes heartFly { 0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; } 100% { transform: translateY(-200px) scale(1.5) rotate(20deg); opacity: 0; } }
+    
+    #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 26, 43, 0.98); z-index: 10001; display: flex; align-items: center; justify-content: center; flex-direction: column; display: none; }
+    .footprint-badge { background: #d32f2f; color: white; padding: 10px 20px; border-radius: 30px; display: inline-block; font-weight: 800; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(211,47,47,0.4); margin-bottom: 15px; }
+    .modal { z-index: 11000 !important; }
+    .modal-backdrop { z-index: 10990 !important; }
+    #island-info-screen .timeline-container {
+        max-width: 100%;
+        margin-top: 20px;
+    }
+
+    #island-info-screen .timeline-container::after {
+        background: var(--gold); 
+    }
+
+    @media screen and (max-width: 768px) {
+        .timeline-item {
+            width: 100% !important;
+            padding-left: 50px !important;
+            padding-right: 10px !important;
+            text-align: left !important;
+        }
+        .timeline-container::after {
+            left: 20px !important;
+        }
+        .timeline-node {
+            left: 10px !important;
+        }
+        .timeline-item.right, .timeline-item.left {
+            left: 0 !important;
+        }
+    }
+    .page {
+        transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    .page-active {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    @keyframes border-pulse {
+        0% { box-shadow: 0 0 15px #ffcc00; }
+        50% { box-shadow: 0 0 35px #ffcc00, 0 0 60px rgba(255, 204, 0, 0.4); }
+        100% { box-shadow: 0 0 15px #ffcc00; }
+    }
+
+    .creative-card {
+        animation: border-pulse 3s infinite ease-in-out;
+    }
+
+    #main-footer {
+        transition: all 0.5s ease;
+    }
+    #main-footer a:hover {
+        background-color: var(--gold);
+        color: var(--navy) !important;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(255, 204, 0, 0.3);
+    }
+    
+    .intro-section-title { color: var(--gold); border-left: 4px solid var(--gold); padding-left: 15px; margin-top: 40px; margin-bottom: 25px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+    .intro-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,204,0,0.1); border-radius: 15px; padding: 25px; transition: 0.3s; height: 100%; }
+    .intro-card:hover { border-color: var(--gold); background: rgba(255,255,255,0.08); transform: translateY(-5px); }
+    .intro-card i { font-size: 2.2rem; color: var(--gold); margin-bottom: 15px; display: block; }
+    .intro-card h5 { color: var(--gold); font-weight: 700; margin-bottom: 15px; }
+    .intro-card ul { padding-left: 18px; color: #cbd5e0; font-size: 0.95rem; }
+    .intro-card ul li { margin-bottom: 8px; }
+    .timeline-box { background: var(--gold); color: var(--navy); padding: 15px; border-radius: 10px; font-weight: bold; text-align: center; height: 100%; }
+    .timeline-desc { font-size: 0.85rem; margin-top: 10px; color: #fff; text-align: center; }
+  </style>
+</head>
+<body>
+
+<div id="loadingOverlay">
+  <div class="spinner-border text-warning" style="width:3rem; height:3rem;"></div>
+  <h5 class="mt-3 text-warning fw-bold">ĐANG KẾT NỐI VỚI ĐẢO XA...</h5>
+</div>
+
+<nav class="navbar navbar-expand-lg fixed-top shadow">
+  <div class="container-fluid px-lg-5">
+    <a class="navbar-brand text-white fw-bold d-flex align-items-center" onclick="switchPage('home')" style="cursor:pointer">
+      <img src="https://lh3.googleusercontent.com/d/1alMPK0dIvSs65j5kgDu9xHauRK_mwdaY" alt="Logo">
+      <span>HÀNH TRÌNH SỐ</span>
+    </a>
+    <button class="navbar-toggler navbar-dark" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <div class="navbar-nav ms-auto">
+        <div class="nav-link" onclick="switchPage('home')">Trang chủ</div>
+        <div class="nav-link" onclick="switchPage('intro')">Giới thiệu</div>
+        <div class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Khám phá</a>
+          <ul class="dropdown-menu dropdown-menu-dark">
+            <li><a class="dropdown-item" onclick="switchPage('map')">Bản đồ 21 điểm đảo</a></li>
+            <li><a class="dropdown-item" onclick="switchPage('legal')">Hồ sơ pháp lý</a></li>
+          </ul>
+        </div>
+        <div class="nav-link" onclick="switchPage('kho')">Kho sáng tạo</div>
+        <div class="nav-link" onclick="switchPage('nhatky')">Nhật ký</div>
+        <div class="nav-link text-warning" onclick="switchPage('stats')"><i class="bi bi-graph-up"></i> Thống kê</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- TRANG CHỦ -->
+<div id="home" class="page page-active text-center">
+  <div style="padding-top: 8vh">
+    <div class="main-logo-container mb-4">
+      <img src="https://lh3.googleusercontent.com/d/1alMPK0dIvSs65j5kgDu9xHauRK_mwdaY" alt="Logo" style="height: 180px;">
+    </div>
+    <h1 style="font-size: 4.8rem; font-weight: 900; color: #fff; letter-spacing: 2px; margin-bottom: 10px;">CHẠM VÀO TRƯỜNG SA</h1>
+    <p style="color:var(--gold); font-size: 1.8rem; font-family: 'Pattaya', sans-serif; margin-bottom: 40px;">
+      Chạm vào biển, đảo quê hương - Chạm vào trái tim Việt Nam
+    </p>
+    <div class="fingerprint-btn" onclick="switchPage('intro')" style="cursor: pointer;">
+       <i class="bi bi-fingerprint fingerprint-icon" style="font-size: 5.5rem;"></i>
+       <span class="finger-text" style="font-size: 1.1rem; margin-top: 10px;">CHẠM ĐỂ BẮT ĐẦU</span>
+    </div>
+  </div>
+</div>
+
+<!-- TRANG GIỚI THIỆU CHI TIẾT -->
+<div id="intro" class="page container py-5">
+  <div class="text-center mb-5">
+    <h1 class="fw-bold text-gold display-4 mb-3">KẾ HOẠCH TỔNG THỂ DỰ ÁN</h1>
+    <p class="lead text-white-50">"Hành Trình Số - Chạm vào Trường Sa, Chạm vào Trái tim Việt Nam"</p>
+  </div>
+
+  <h3 class="intro-section-title">I. Mục tiêu & Sứ mệnh</h3>
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="intro-card">
+        <i class="bi bi-heart-pulse-fill"></i>
+        <h5>Xóa bỏ rào cản - Kết nối yêu thương</h5>
+        <p class="text-white-50 small">Giúp học sinh ở Tây Nguyên, vùng biên giới, vùng nông thôn, học sinh khuyết tật và học sinh cả nước có cơ hội “chạm” vào Trường Sa thông qua nền tảng số, dù chưa một lần đặt chân ra biển.</p>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="intro-card">
+        <i class="bi bi-shield-check"></i>
+        <h5>Giáo dục chủ quyền từ trái tim</h5>
+        <p class="text-white-50 small">Lựa chọn 21 điểm đảo như 21 câu chuyện cảm xúc, giúp học sinh hiểu đúng về chủ quyền, cảm nhận sự hy sinh của chiến sĩ và nuôi dưỡng trách nhiệm công dân.</p>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="intro-card">
+        <i class="bi bi-lightbulb"></i>
+        <h5>Khơi dậy sáng tạo kỷ nguyên số</h5>
+        <p class="text-white-50 small">Học sinh trở thành chủ thể sáng tạo nội dung biển đảo bằng Công nghệ, Nghệ thuật, STEM và Truyền thông hiện đại.</p>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="intro-card">
+        <i class="bi bi-flag-fill"></i>
+        <h5>Khẳng định chủ quyền thiêng liêng</h5>
+        <p class="text-white-50 small">Mở rộng nhận thức về Hoàng Sa - Trường Sa, gắn kết tình yêu với toàn bộ không gian biển đảo và thiên nhiên Tổ quốc.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-5">
+    <div class="col-md-6">
+      <h3 class="intro-section-title">II. Đối tượng tham gia</h3>
+      <div class="p-4 rounded-4" style="background: rgba(211, 47, 47, 0.1); border: 1px solid #d32f2f;">
+        <ul class="m-0 text-white">
+          <li>Học sinh Tiểu học, THCS, THPT trên toàn quốc.</li>
+          <li>Ưu tiên học sinh vùng cao, biên giới, vùng khó khăn.</li>
+          <li><b>Nền tảng:</b> Web-app tích hợp Bản đồ số 21 điểm đảo, Không gian trưng bày & Nhật ký hành trình.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="intro-section-title">IV. Nhật ký hành trình số</h3>
+      <div class="p-4 rounded-4" style="background: rgba(21, 66, 149, 0.2); border: 1px solid var(--primary);">
+        <p class="small text-white-50">Tạo dấu ấn “triệu dấu chân số” đến Trường Sa. Mỗi người tham quan sau khi khám phá các đảo sẽ viết lại cảm xúc, lời hứa hoặc lời chúc gửi tới các chiến sĩ.</p>
+        <span class="badge bg-warning text-dark">Mục tiêu: Đo lường tác động cảm xúc & lan tỏa triệu dấu chân số</span>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="intro-section-title">III. Hình thức tham gia & Hoạt động sáng tạo</h3>
+  <div class="row g-3">
+    <div class="col-md-3">
+      <div class="intro-card text-center">
+        <i class="bi bi-cpu"></i>
+        <h6 class="text-gold fw-bold">Công nghệ</h6>
+        <ul class="text-start small list-unstyled">
+          <li>• Phim hoạt hình ngắn</li>
+          <li>• Mini-game giáo dục</li>
+          <li>• Mô hình AR/VR</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="intro-card text-center">
+        <i class="bi bi-megaphone"></i>
+        <h6 class="text-gold fw-bold">Truyền thông</h6>
+        <ul class="text-start small list-unstyled">
+          <li>• Podcast: Sóng Trường Sa</li>
+          <li>• E-magazine, Video</li>
+          <li>• Sticker/Avatar yêu nước</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="intro-card text-center">
+        <i class="bi bi-flower1"></i>
+        <h6 class="text-gold fw-bold">Trải nghiệm STEM</h6>
+        <ul class="text-start small list-unstyled">
+          <li>• Vườn cây Trường Sa (QR)</li>
+          <li>• Mô hình lọc nước mặn</li>
+          <li>• Điện gió, năng lượng xanh</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="intro-card text-center">
+        <i class="bi bi-palette"></i>
+        <h6 class="text-gold fw-bold">Nghệ thuật</h6>
+        <ul class="text-start small list-unstyled">
+          <li>• Tranh vẽ vật liệu tái chế</li>
+          <li>• Video Flashmob/Múa hát</li>
+          <li>• Thông điệp yêu thương</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-5">
+    <div class="col-md-7">
+      <h3 class="intro-section-title">V. Hệ thống tiêu chí (3 Trụ cột)</h3>
+      <div class="table-responsive">
+        <table class="table table-dark table-bordered border-secondary">
+          <thead>
+            <tr>
+              <th class="text-warning">Trụ cột</th>
+              <th class="text-warning">Nội dung chấm giải</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><b>CHẠM</b> (Nội dung)</td><td class="small">Độ chính xác kiến thức, chiều sâu cảm xúc, thông điệp nhân văn.</td></tr>
+            <tr><td><b>SÁNG</b> (Sáng tạo)</td><td class="small">Ý tưởng mới mẻ, ứng dụng công nghệ, vật liệu tái chế.</td></tr>
+            <tr><td><b>TỎA</b> (Lan tỏa)</td><td class="small">Lượt xem, tương tác và chất lượng nhật ký kêu gọi được.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col-md-5">
+      <h3 class="intro-section-title">VI. Vinh danh</h3>
+      <div class="intro-card">
+        <ul class="list-unstyled mb-0">
+          <li class="mb-2"><i class="bi bi-trophy-fill d-inline-block me-2" style="font-size:1.2rem"></i> <b>Giải Nhất:</b> Đại sứ số Trường Sa</li>
+          <li class="mb-2"><i class="bi bi-award d-inline-block me-2" style="font-size:1.2rem"></i> <b>Giải Nhì:</b> Trái tim biển đảo</li>
+          <li class="mb-2"><i class="bi bi-star-fill d-inline-block me-2" style="font-size:1.2rem"></i> <b>Giải Ba:</b> Chiến sĩ nhỏ sáng tạo</li>
+          <li class="text-warning mt-3 small">* Giải tập thể: "Dấu chân số ấn tượng"</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="intro-section-title">VII. Lộ trình thực hiện (12/2025 - 03/2026)</h3>
+  <div class="row g-3">
+    <div class="col-md-3">
+      <div class="timeline-box">GĐ 1: KHỞI ĐỘNG</div>
+      <p class="timeline-desc">Tháng 12/2025: Kích hoạt Web-app, Phát động dự án.</p>
+    </div>
+    <div class="col-md-3">
+      <div class="timeline-box">GĐ 2: TRẢI NGHIỆM</div>
+      <p class="timeline-desc">Tháng 1-2/2026: Tham quan đảo, Viết nhật ký, Đăng tải sản phẩm.</p>
+    </div>
+    <div class="col-md-3">
+      <div class="timeline-box">GĐ 3: LAN TỎA</div>
+      <p class="timeline-desc">Đầu tháng 3/2026: Bình chọn cộng đồng & Chấm giải.</p>
+    </div>
+    <div class="col-md-3">
+      <div class="timeline-box">GĐ 4: VINH DANH</div>
+      <p class="timeline-desc">Cuối tháng 3/2026: Trao giải trực tuyến & Vinh danh Đại sứ.</p>
+    </div>
+  </div>
+</div>
+
+<!-- TRANG BẢN ĐỒ -->
+<div id="map" class="page container py-4 text-center">
+  <h2 class="fw-bold text-gold mb-1">BẢN ĐỒ SỐ TƯƠNG TÁC</h2>
+  <p class="text-white-50 mb-4 small">Chạm vào từng hòn đảo để xem những thước phim sống động về biển, đảo tổ quốc.</p>
+  <div class="map-container shadow-lg">
+    <img src="https://lh3.googleusercontent.com/d/140IL3nahd1BfDkP8MORitt5rF0SlcCoN" class="map-img">
+    <div class="map-hotspot" style="top: 25%; left: 69%;" onclick="openIsland('Đảo Song Tử Tây')"></div>
+    <div class="map-hotspot" style="top: 32%; left: 64%;" onclick="openIsland('Đảo Đá Nam')"></div>
+    <div class="map-hotspot" style="top: 32%; left: 77%;" onclick="openIsland('Đảo Sơn Ca')"></div>
+    <div class="map-hotspot" style="top: 30%; left: 85%;" onclick="openIsland('Đảo Đá Thị')"></div>
+    <div class="map-hotspot" style="top: 40%; left: 77%;" onclick="openIsland('Đảo Nam Yết')"></div>
+    <div class="map-hotspot" style="top: 48%; left: 68%;" onclick="openIsland('Đảo Sinh Tồn')"></div>
+    <div class="map-hotspot" style="top: 49%; left: 81%;" onclick="openIsland('Đảo Sinh Tồn Đông')"></div>
+    <div class="map-hotspot" style="top: 55%; left: 64%;" onclick="openIsland('Đảo Cô Lin')"></div>
+    <div class="map-hotspot" style="top: 55%; left: 75%;" onclick="openIsland('Đảo Len Đao')"></div>
+    <div class="map-hotspot" style="top: 67%; left: 88%;" onclick="openIsland('Đảo Tiên Nữ')"></div>
+    <div class="map-hotspot" style="top: 61%; left: 82%;" onclick="openIsland('Đảo Tốc Tan')"></div>
+    <div class="map-hotspot" style="top: 68%; left: 78%;" onclick="openIsland('Đảo Núi Le')"></div>
+    <div class="map-hotspot" style="top: 70%; left: 36%;" onclick="openIsland('Đảo Trường Sa')"></div>
+    <div class="map-hotspot" style="top: 58%; left: 38%;" onclick="openIsland('Đảo Trường Sa Đông')"></div>
+    <div class="map-hotspot" style="top: 64%; left: 49%;" onclick="openIsland('Đảo Đá Đông')"></div>
+    <div class="map-hotspot" style="top: 58%; left: 52%;" onclick="openIsland('Đảo Đá Tây')"></div>
+    <div class="map-hotspot" style="top: 67%; left: 26%;" onclick="openIsland('Đảo Đá Lát')"></div>
+    <div class="map-hotspot" style="top: 73%; left: 53%;" onclick="openIsland('Đảo Thuyền Chài')"></div>
+    <div class="map-hotspot" style="top: 78%; left: 50%;" onclick="openIsland('Đảo An Bang')"></div>
+    <div class="map-hotspot" style="top: 67%; left: 67%;" onclick="openIsland('Đảo Phan Vinh')"></div>
+    <div class="map-hotspot" style="top: 41%; left: 56%;" onclick="openIsland('Đảo Đá Lớn')"></div>
+    <div class="map-hotspot" style="top: 30%; left: 45.5%;" onclick="openIsland('Quần đảo Hoàng Sa')"></div>
+  </div>
+</div>
+
+<!-- TRANG PHÁP LÝ -->
+<div id="legal" class="page container py-4">
+  <div class="text-center mb-3"><h2 class="fw-bold text-gold mb-1">HỒ SƠ CHỦ QUYỀN BIỂN ĐẢO</h2></div>
+  <div class="book-wrapper" id="book-container">
+    <div id="flipbook">
+      <div class="hard"><img src="https://lh3.googleusercontent.com/d/1n2V-OlrIn2zo2HqKlH0_9A1j6hyPuAba"></div>
+      <div><img src="https://lh3.googleusercontent.com/d/1nTziKguX9WZtZpVbY4nObdC1E8MkTFIC"></div>
+      <div><img src="https://lh3.googleusercontent.com/d/1F-Q1HlAwLyCknOl4omtArquVM1C9EgX-"></div>
+      <div><img src="https://lh3.googleusercontent.com/d/1aK_gNVk8o9HwYjC0V7JGG1DBthpDW41J"></div>
+      <div><img src="https://lh3.googleusercontent.com/d/1QncU5bM7R9KXbfRk5V8y1SChWk8Mh4WH"></div>
+      <div><img src="https://lh3.googleusercontent.com/d/1P28EoR6FrtQ64MCoVrhyleegegOOtx9a"></div>
+      <div><img src="https://lh3.googleusercontent.com/d/14FJNgBm1F1JShxKGNbJET-OeXaM3EBt6"></div>
+      <div><img src="https://lh3.googleusercontent.com/d/1gptcmHqI047jxu1RWZG1TYCepwBXe907"></div>
+      <div><img src="https://lh3.googleusercontent.com/d/1TC9AdnZC4wS4Nn8A-eKMqum1rw-H-aJ1"></div>
+      <div><img src="https://lh3.googleusercontent.com/d/1AmOX8aPpE_3YSo6jtSeK249M3FCrrEfO"></div>
+      <div><img src="https://lh3.googleusercontent.com/d/1GpdIa9tFx7DzP9xcqCCbWbJHR7fMhumm"></div>
+      <div><img src="https://lh3.googleusercontent.com/d/1bGgFI-aYI0NX4DC_cvTMswzhMBnJA8JX"></div>
+      <div><img src="https://lh3.googleusercontent.com/d/1LXiSixLp2D1ueOEgzBFsk7SwcooiCQWa"></div>
+      <div class="hard"><img src="https://lh3.googleusercontent.com/d/1HMcLFsyUJCT176GuGkMjkWKZIz1u18Gb"></div>
+    </div>
+  </div>
+  <div class="controls mb-5">
+    <button class="btn-book" onclick="$('#flipbook').turn('previous')">◀ TRANG TRƯỚC</button>
+    <button class="btn-book" onclick="$('#flipbook').turn('next')">TRANG SAU ▶</button>
+  </div>
+</div>
+
+<!-- THỐNG KÊ -->
+ <div id="stats" class="page container py-4">
+  <div class="text-center mb-5">
+    <h1 class="fw-bold text-gold display-5">TRẠM DỮ LIỆU SỐ</h1>
+    <p class="text-white-50">"Triệu bước chân số - Một lòng hướng về Trường Sa"</p>
+  </div>
+  
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="stat-card"><span class="stat-number" id="st-visit">0</span><div class="stat-label">TRUY CẬP</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><span class="stat-number" id="st-kho">0</span><div class="stat-label">TÁC PHẨM SỐ</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><span class="stat-number" id="st-nk">0</span><div class="stat-label">NHẬT KÝ</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><span class="stat-number" id="st-map">0</span><div class="stat-label">TƯƠNG TÁC ĐẢO</div></div></div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="vn-map-wrapper h-100">
+        <h6 class="text-gold fw-bold mb-3"><i class="bi bi-geo-fill"></i> BẢN ĐỒ KẾT NỐI TOÀN QUỐC</h6>
+        <div style="position: relative;" id="vnMapContainer">
+          <img src="https://drive.google.com/thumbnail?id=1MZTBQLrGkn4r6YrLiyXwWeTtMPOfS_yz&sz=w1000" class="vn-map-img">
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-5">
+      <div class="top-list-container h-100">
+        <h6 class="text-gold fw-bold mb-3"><i class="bi bi-trophy"></i> ĐỊA PHƯƠNG LAN TỎA MẠNH NHẤT</h6>
+        <table class="table table-dark table-borderless m-0" id="tb-provinces"></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mt-2">
+    <div class="col-md-6">
+      <div class="top-list-container">
+        <h6 class="text-gold fw-bold mb-3"><i class="bi bi-award"></i> TOP TRƯỜNG TIÊU BIỂU</h6>
+        <table class="table table-dark table-borderless m-0" id="tb-schools"></table>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="top-list-container">
+        <h6 class="text-gold fw-bold mb-3"><i class="bi bi-people"></i> CÁ NHÂN TÍCH CỰC</h6>
+        <table class="table table-dark table-borderless m-0" id="tb-users"></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- KHO SÁNG TẠO -->
+<div id="kho" class="page container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="fw-bold text-gold m-0">KHO SÁNG TẠO</h2>
+    <button class="btn btn-warning rounded-pill px-4 fw-bold shadow" onclick="openModal('modalEntry')">+ GỬI BÀI</button>
+  </div>
+  <div class="search-box"><input type="text" id="searchKho" class="form-control" placeholder="Tìm tác phẩm, tên, trường..." onkeyup="handleSearch('K')"></div>
+  <div class="text-center mb-4">
+    <div class="filter-pill active" onclick="filterKho('Tất cả', this)">Tất cả</div>
+    <div class="filter-pill" onclick="filterKho('Phim hoạt hình', this)">Phim hoạt hình</div>
+    <div class="filter-pill" onclick="filterKho('Podcast', this)">Podcast</div>
+    <div class="filter-pill" onclick="filterKho('Bài viết', this)">Bài viết</div>
+    <div class="filter-pill" onclick="filterKho('STEM', this)">STEM</div>
+    <div class="filter-pill" onclick="filterKho('Nghệ thuật', this)">Nghệ thuật</div>
+  </div>
+  <div class="row g-4" id="khoDisplay"></div>
+</div>
+
+<!-- NHẬT KÝ -->
+<div id="nhatky" class="page container py-4">
+  <div class="diary-page-header">
+    <h2>NHẬT KÝ HÀNH TRÌNH</h2>
+    <p>"Mỗi dòng nhật ký là một nhịp đập trái tim hướng về biển đảo quê hương."</p>
+  </div>
+  <div class="custom-search-box">
+    <input type="text" id="searchDiary" class="form-control" placeholder="Tìm theo tên hoặc tên đảo..." onkeyup="handleSearchDiary()">
+  </div>
+  <div class="text-center mb-5">
+    <button class="btn btn-danger rounded-pill fw-bold px-5 py-2 shadow" onclick="openModal('modalDiary')">
+      <i class="bi bi-pencil-fill me-2"></i> VIẾT NHẬT KÝ THĂM ĐẢO
+    </button>
+  </div>
+  <div class="timeline-container" id="diaryDisplay"></div>
+</div>
+
+<!-- MODAL CHỦ QUYỀN -->
+<div class="modal fade" id="islandModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="modal-title-custom" id="isl-modal-title-full">
+                    Chạm tay vào đảo: <span id="isl-name-text"></span> <i class="bi bi-box-arrow-up-right ms-1"></i>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="sovereignty-box" onclick="showIslandDetail()">
+                <i class="fas fa-star sov-star"></i>
+                <div class="sov-text-1">HOÀNG SA - TRƯỜNG SA</div>
+                <div class="sov-text-2">LÀ CỦA VIỆT NAM</div>
+                <div class="sov-btn-play">
+                    <i class="bi bi-play-circle-fill me-1"></i> Bấm để xem Video & Chi tiết
+                </div>
+            </div>
+            <div class="island-desc-italic" id="isl-modal-desc-short"></div>
+            <div class="modal-custom-footer">
+                <div><i class="bi bi-bank me-1"></i> Hành Trình Số Việt Nam My Love</div>
+                <div class="author-blue"><i class="bi bi-person-fill me-1"></i> <span id="isl-modal-author-name"></span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TRANG CHI TIẾT ĐẢO -->
+<div id="island-info-screen">
+    <div class="container py-3">
+        <div class="d-flex justify-content-between align-items-end mb-3">
+             <div class="footprint-badge" id="island-footprints">0 DẤU CHÂN CHẠM ĐẢO</div>
+             <h1 class="island-big-title" id="info-big-title">ĐẢO TRƯỜNG SA</h1>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-7">
+                <div class="island-card shadow">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-primary mb-0"><i class="bi bi-play-btn-fill"></i> PHIM TƯ LIỆU ĐẢO</h5>
+                        <span id="info-video-badge" class="badge bg-danger rounded-pill px-3 py-2 fw-bold"></span>
+                    </div>
+                    <div class="video-container shadow-sm mb-3" style="position:relative; background:#000; border-radius:15px; overflow:hidden;">
+                        <div class="drive-mask"></div>
+                        <div id="info-video-container" style="width:100%; height:100%;"></div>
+                    </div>
+                    <div id="info-video-meta" class="p-3 rounded-3 d-flex justify-content-between align-items-center" style="background: rgba(21, 66, 149, 0.05); border-bottom: 3px solid #154295;">
+                        <div id="info-author-school" class="text-muted small fw-bold"></div>
+                        <div id="info-author-name" class="fw-bold text-navy" style="font-size: 1.1rem;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="island-card shadow h-100">
+                    <h5 class="fw-bold text-primary mb-3"><i class="bi bi-info-circle-fill"></i> GIỚI THIỆU CHI TIẾT ĐẢO</h5>
+                    <div id="info-text-content" style="line-height: 1.8; text-align: justify; overflow-y: auto; max-height: 480px; padding-right:15px; color: #333; font-size: 1.05rem;"></div>
+                </div>
+            </div>
+            <div class="col-12 mt-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="fw-bold text-white border-start border-4 border-warning ps-3">NHẬT KÝ THĂM ĐẢO NÀY</h3>
+                    <button class="btn btn-danger rounded-pill px-4 fw-bold shadow" onclick="openModalWithIsland('modalDiary')">VIẾT NHẬT KÝ CHO ĐẢO</button>
+                </div>
+                <div class="timeline-container" id="island-diary-list"></div>
+            </div>
+            <div class="col-12 mt-5 mb-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="fw-bold text-white border-start border-4 border-warning ps-3">TÁC PHẨM SÁNG TẠO VỀ ĐẢO</h3>
+                    <button class="btn btn-warning rounded-pill px-4 fw-bold shadow" onclick="openModalWithIsland('modalEntry')">GỬI TÁC PHẨM VỀ ĐẢO</button>
+                </div>
+                <div class="row g-4" id="island-kho-list"></div>
+            </div>
+        </div>
+    </div>
+    <div class="back-btn-float" onclick="closeIslandInfo()"><i class="bi bi-arrow-left"></i></div>
+</div>
+
+<!-- MODAL CHI TIẾT TÁC PHẨM -->
+<div class="modal fade" id="modalDetail" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 bg-transparent">
+      <div class="paper-post shadow-lg">
+        <div class="modal-ship-stamp"><i class="fa-solid fa-ship"></i></div>
+        <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
+        <div id="detTitle" class="detail-author-name"></div>
+        <div id="detMeta" class="post-meta-custom"></div>
+        <div id="detMedia" class="mb-3"></div>
+        <div id="detContent" class="detail-body-text"></div>
+        <div id="responseSection" class="response-wave mt-4"></div>
+        <div class="d-flex justify-content-between align-items-center mt-4">
+          <div id="extraArea" style="max-width: 70%"></div>
+          <button class="btn btn-danger rounded-pill px-4 shadow-sm" id="btnLikeAction"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FORM MODALS -->
+<div class="modal fade" id="modalEntry" tabindex="-1"><div class="modal-dialog modal-lg"><form id="formEntry" class="modal-content p-4 text-dark border-0"><h4 class="fw-bold text-center mb-4">GỬI TÁC PHẨM SÁNG TẠO</h4><div class="row g-3"><div class="col-md-5"><label class="small fw-bold">Họ tên</label><input type="text" name="hoTen" class="form-control" required></div><div class="col-md-2"><label class="small fw-bold">Lớp</label><input type="text" name="lop" class="form-control text-uppercase" placeholder="VD: 10A1" required style="text-transform: uppercase;"></div><div class="col-md-5"><label class="small fw-bold">Trường</label><input type="text" name="truong" class="form-control" required></div><div class="col-md-4"><label class="small fw-bold">Xã / Phường</label><input type="text" name="xaPhuong" class="form-control" required></div><div class="col-md-4"><label class="small fw-bold">Tỉnh / Thành</label><select name="tinhThanh" class="province-list form-select" required></select></div><div class="col-md-4"><label class="small fw-bold">Hạng mục</label><select name="hangMuc" class="form-select"><option>Phim hoạt hình</option><option>Podcast</option><option>Bài viết</option><option>STEM</option><option>Nghệ thuật</option></select></div><div class="col-md-12"><label class="small fw-bold">Tên tác phẩm</label><input type="text" name="tenTacPham" class="form-control" required></div><div class="col-md-12"><label class="small fw-bold">Đảo lấy cảm hứng</label><select name="diemDao" id="entryIslandSelect" class="island-list form-select"></select></div><div class="col-12"><label class="small fw-bold">Mô tả nội dung</label><textarea name="moTa" class="form-control" rows="4" required></textarea></div><div class="col-md-6"><label class="small fw-bold">Ảnh minh họa / PDF</label><input type="file" name="file" class="form-control"></div><div class="col-md-6"><label class="small fw-bold">Link Video (YouTube/Drive)</label><input type="text" name="videoLink" class="form-control"></div></div><button type="submit" class="btn btn-warning w-100 py-3 mt-4 fw-bold">XÁC NHẬN GỬI</button></form></div></div>
+<div class="modal fade" id="modalDiary" tabindex="-1"><div class="modal-dialog modal-lg"><form id="formDiary" class="modal-content p-4 text-dark border-0"><h4 class="fw-bold text-center mb-3">VIẾT NHẬT KÝ THĂM ĐẢO</h4><div class="row g-2"><div class="col-md-6"><label class="small fw-bold">Họ tên</label><input type="text" name="hoTen" class="form-control" required></div><div class="col-md-2"><label class="small fw-bold">Lớp</label><input type="text" name="lop" class="form-control text-uppercase" placeholder="VD: 1A" required style="text-transform: uppercase;"></div><div class="col-md-4"><label class="small fw-bold">Trường</label><input type="text" name="truong" class="form-control" required></div><div class="col-md-6"><label class="small fw-bold">Xã / Phường</label><input type="text" name="xaPhuong" class="form-control" required></div><div class="col-md-6"><label class="small fw-bold">Tỉnh / Thành</label><select name="tinhThanh" class="province-list form-select" required></select></div><div class="col-12"><label class="small fw-bold">Đảo bạn ghé thăm</label><select name="diemDao" id="diaryIslandSelect" class="island-list form-select"></select></div><div class="col-12"><label class="small fw-bold">Tâm tình của bạn</label><textarea name="noiDung" class="form-control" rows="6" required></textarea></div></div><button type="submit" class="btn btn-danger w-100 py-3 mt-3 fw-bold">GỬI NHẬT KÝ</button></form></div></div>
+
+<script>
+  /* ==========================================
+     DATA BRIDGE: KẾT NỐI VERCEL -> GOOGLE SHEET
+     ========================================== */
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxqVqzJfyYAR4Ke0JfVIZ5d1qVm9TeTZXkm9EmKAJsdlxAFdPtwxk-HF0br4aDVLXYdeg/exec"; // THAY LINK WEB APP CỦA BẠN VÀO ĐÂY
+
+  async function callGAS(action, args = []) {
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: action, args: args })
+      });
+      return await response.json();
+    } catch (e) {
+      console.error("Lỗi kết nối API:", e);
+      return null;
+    }
+  }
+
+  // Giả lập google.script.run để giữ nguyên 100% logic code cũ
+  const google = {
+    script: {
+      run: {
+        withSuccessHandler: function(callback) {
+          return new Proxy({}, {
+            get: (target, name) => {
+              return async (...args) => {
+                const result = await callGAS(name, args);
+                if (callback) callback(result);
+              };
+            }
+          });
+        }
+      }
+    }
+  };
+
+  /* ==========================================
+     LOGIC XỬ LÝ GIAO DIỆN (GIỮ NGUYÊN 100%)
+     ========================================== */
+  let K_DATA = [], D_DATA = [], MAP_DATA_STORE = {}, SELECTED_ISLAND = '', CURRENT_CAT = 'Tất cả';
+  const TINH_34 = ["Hà Nội", "TP Hồ Chí Minh", "Hải Phòng", "Đà Nẵng", "Cần Thơ", "Khánh Hòa", "Quảng Ninh", "Nghệ An", "Thanh Hóa", "Thừa Thiên Huế", "Quảng Nam", "Bình Định", "Phú Yên", "Ninh Thuận", "Bình Thuận", "Bà Rịa - Vũng Tàu", "Long An", "Tiền Giang", "Bến Tre", "Trà Vinh", "Vĩnh Long", "Đồng Tháp", "An Giang", "Kiên Giang", "Cà Mau", "Bạc Liêu", "Sóc Trăng", "Nam Định", "Thái Bình", "Ninh Bình", "Hà Nam", "Quảng Bình", "Quảng Trị", "Lâm Đồng"];
+  const DAO_21 = ["Đảo Trường Sa", "Đảo Trường Sa Đông", "Đảo Phan Vinh", "Đảo Sinh Tồn", "Đảo Sinh Tồn Đông", "Đảo Nam Yết", "Đảo Sơn Ca", "Đảo Song Tử Tây", "Đảo Đá Tây", "Đảo Đá Lát", "Đảo Đá Thị", "Đảo Đá Nam", "Đảo Đá Lớn", "Đảo Đá Đông", "Đảo Tốc Tan", "Đảo Núi Le", "Đảo Tiên Nữ", "Đảo Thuyền Chài", "Đảo Cô Lin", "Đảo Len Đao", "Đảo An Bang"];
+
+  const WAVE_MESSAGES = ["Tín hiệu từ đảo xa xin hồi đáp! Cảm ơn bạn đã luôn hướng về chúng tôi.", "Sóng từ Trường Sa đã nhận được tâm tình của bạn. Thân ái!", "Lời nhắn đã được chuyển đến các chiến sĩ. Cảm ơn tình cảm chân thành của bạn!", "Nhịp đập từ biển khơi vang vọng lời cảm ơn đến đất liền.", "Trường Sa luôn trong tim và chúng tôi luôn vững tay súng. Cảm ơn lời động viên!", "Biển xanh vẫy gọi, xin gửi lời chào thân thương nhất từ đảo xa đến bạn.", "Tín hiệu rõ! Chúng tôi vẫn đang vững vàng tay súng bảo vệ biển trời Tổ quốc.", "Cảm ơn những dòng nhật ký đầy xúc động của bạn. Chúc bạn luôn học tốt!"];
+  let currentRotation = 0;
+
+  const VN_COORDS = {"Hà Nội": {t: 19, l: 38}, "TP Hồ Chí Minh": {t: 76, l: 46}, "An Giang": {t: 81, l: 33}, "Nghệ An": {t: 28, l: 33}, "Quảng Trị": {t: 38, l: 42}, "Cà Mau": {t: 88, l: 34}, "Lạng Sơn": {t: 15, l: 48}, "Đắ k Lắk": {t: 67, l: 61}, "Khánh Hòa": {t: 70, l: 65}, "Hải Phòng": {t: 19, l: 44}, "Đà Nẵng": {t: 50, l: 57}, "Cần Thơ": {t: 85, l: 39}, "Ninh Bình": {t: 23, l: 40}, "Quảng Bình": {t: 35, l: 40}, "Quảng Nam": {t: 52, l: 58}, "Bình Định": {t: 58, l: 61}, "Bà Rịa - Vũng Tàu": {t: 77, l: 52}, "Lâm Đồng": {t: 73, l: 58}, "Thanh Hóa": {t: 25, l: 36}, "Thái Bình": {t: 21, l: 43}};
+
+  window.onload = () => {
+    google.script.run.withSuccessHandler(() => { refreshStats(); }).logVisit();
+    document.querySelectorAll('.province-list').forEach(s => { s.innerHTML = ''; TINH_34.sort().forEach(t => s.add(new Option(t,t))); });
+    document.querySelectorAll('.island-list').forEach(s => { s.innerHTML = ''; DAO_21.forEach(d => s.add(new Option(d,d))); });
+    refresh();
+  };
+
+  function switchPage(id) {
+    $('.modal-backdrop').remove(); 
+    $('body').removeClass('modal-open').css('overflow', 'auto');
+    $('.page').removeClass('page-active').hide(); 
+    $(`#${id}`).addClass('page-active').show();
+    if (id === 'home') $('#main-footer').hide(); else $('#main-footer').fadeIn(500);
+    if(id === 'legal') setTimeout(() => { $("#flipbook").turn({ width: 1000, height: 282, autoCenter: true }); }, 500);
+    window.scrollTo(0,0);
+  }
+
+  function openModal(id) { new bootstrap.Modal(document.getElementById(id)).show(); }
+  function openModalWithIsland(id) { if(id === 'modalDiary') $('#diaryIslandSelect').val(SELECTED_ISLAND); if(id === 'modalEntry') $('#entryIslandSelect').val(SELECTED_ISLAND); openModal(id); }
+
+  function refresh() {
+    google.script.run.withSuccessHandler(d => { 
+      const MAP_KEY = "hành trình số việt nam my love";
+      K_DATA = d.filter(r => !(r[2] == -1 && r[3].toLowerCase() === MAP_KEY));
+      let mapData = d.filter(r => (r[2] == -1 && r[3].toLowerCase() === MAP_KEY));
+      MAP_DATA_STORE = {}; mapData.forEach(r => { MAP_DATA_STORE[r[8]] = r; });
+      renderK([...K_DATA]); $('#loadingOverlay').hide();
+    }).getData("KHO_SANG_TAO");
+    google.script.run.withSuccessHandler(d => { D_DATA = d; renderD([...D_DATA]); }).getData("NHAT_KY");
+  }
+
+  function renderK(data, targetId = 'khoDisplay') {
+    data.sort((a, b) => (parseInt(b[12]) || 0) - (parseInt(a[12]) || 0));
+    let h = '';
+    data.forEach((r) => {
+        let originalIdx = K_DATA.findIndex(item => item[0] === r[0]);
+        let vLink = r[11] || ''; let mediaHtml = '';
+        if (vLink) {
+            let yId = vLink.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v\/|.*u\/\w\/|embed\/|.*v=))([^#\&\?]*)/);
+            if (yId) mediaHtml = `<div style="height:160px;" class="rounded-3 overflow-hidden position-relative"><img src="https://img.youtube.com/vi/${yId[1]}/0.jpg" class="w-100 h-100 object-fit-cover"><i class="fab fa-youtube position-absolute top-50 start-50 translate-middle text-white fa-3x" style="opacity:0.8"></i></div>`;
+            else { let dId = getDriveId(vLink); if (dId) mediaHtml = `<div style="height:160px;" class="rounded-3 overflow-hidden position-relative bg-dark"><img src="https://drive.google.com/thumbnail?id=${dId}&sz=w400" class="w-100 h-100 object-fit-cover"><i class="fas fa-play-circle position-absolute top-50 start-50 translate-middle text-white fa-3x" style="opacity:0.8"></i></div>`; }
+        }
+        if (!mediaHtml) { let dId = getDriveId(r[10]); mediaHtml = dId ? `<div style="height:160px;"><img src="https://lh3.googleusercontent.com/d/${dId}" class="w-100 h-100 object-fit-cover rounded-3"></div>` : `<div class="bg-light p-3 small text-muted rounded-3" style="height:160px; overflow:hidden;">${r[9].substring(0,120)}...</div>`; }
+        h += `<div class="col-md-4 mb-4"><div class="creative-card shadow-sm" style="cursor:pointer" onclick="showDetail(${originalIdx},'K')">${mediaHtml}<div class="mt-3"><span class="badge mb-2">${r[6]}</span><h6 class="text-truncate">${r[7]}</h6><p class="small text-muted mb-2"><i class="bi bi-person"></i> ${r[1]} - ${r[3]}</p><div class="d-flex justify-content-between align-items-center"><span class="small text-danger fw-bold"><i class="bi bi-geo-alt"></i> ${r[8]}</span><button class="heart-btn btn btn-sm" onclick="event.stopPropagation(); createHeartBalloon(event); handleLike('K','${r[0]}')">${r[12]||0} <i class="bi bi-heart-fill"></i></button></div></div></div></div>`;
+    });
+    $(`#${targetId}`).html(h || '<div class="text-center text-white-50 p-4 w-100">Chưa có tác phẩm nào.</div>');
+  }
+
+  function renderD(data, targetId = 'diaryDisplay') {
+    let h = '';
+    data.forEach((r, index) => {
+        let originalIdx = D_DATA.findIndex(orig => orig[0] === r[0]);
+        let side = (index % 2 === 0) ? 'left' : 'right';
+        let displayDate = formatDate(r[0]);
+        h += `<div class="timeline-item ${side}"><div class="timeline-date"><i class="bi bi-send-fill"></i> ${displayDate}</div><div class="timeline-node"></div><div class="timeline-card shadow" style="cursor:pointer" onclick="showDetail(${originalIdx},'D')"><div class="ship-stamp" style="color: rgba(21, 66, 149, 0.08);"><i class="fa-solid fa-anchor"></i></div><div class="info-header mb-2" style="border-bottom: 1px solid #eee; color: #154295; padding-bottom:5px;"><i class="bi bi-geo-alt-fill text-danger"></i> <b>${r[6]}</b></div><div style="font-family: 'Pattaya', sans-serif; color: #555; font-size: 1.15rem; line-height: 1.6;">"${r[7].substring(0, 100)}..."</div><div class="d-flex justify-content-between align-items-center mt-3"><span class="small text-muted">Từ: <b>${r[1]}</b></span><button class="heart-btn btn btn-sm" onclick="event.stopPropagation(); createHeartBalloon(event); handleLike('D','${r[0]}')"><span id="like-count-${r[0]}">${r[8] || 0}</span> <i class="bi bi-heart-fill"></i></button></div></div></div>`;
+    });
+    $(`#${targetId}`).html(h || '<div class="text-center text-white-50 p-4 w-100">Chưa có nội dung nhật ký.</div>');
+  }
+
+  function showDetail(idx, type) {
+    let r = (type === 'K') ? K_DATA[idx] : D_DATA[idx]; if(!r) return;
+    currentRotation = 0; $('.modal-backdrop').remove();
+    let authorName = r[1];
+    let metaHtml = (type === 'K') ? `<div class="detail-meta-row"><span><i class="bi bi-collection-play text-danger"></i> ${r[6]}</span><span><i class="bi bi-house-door"></i> ${r[3]}</span><span><i class="bi bi-geo-alt-fill text-primary"></i> ${r[8]}</span></div>` : `<div class="detail-meta-row"><span><i class="bi bi-geo-alt-fill text-danger"></i> <b>Đảo: ${r[6]}</b></span><span><i class="bi bi-person-badge"></i> Lớp: ${r[2]}</span><span><i class="bi bi-house-door"></i> ${r[3]}</span><span><i class="bi bi-map"></i> ${r[5]}</span></div>`;
+    $('#detTitle').html(`<div class="detail-author-name">${authorName}</div>`);
+    $('#detMeta').html(metaHtml);
+    let mediaHtml = ''; let vLink = r[11] || '', fLink = r[10] || ''; 
+    if (vLink) {
+        let yId = vLink.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v\/|.*u\/\w\/|embed\/|.*v=))([^#\&\?]*)/);
+        if (yId) mediaHtml = `<div class="detail-media-box"><div class="media-wrapper video-wrapper"><div class="drive-mask"></div><iframe src="https://www.youtube.com/embed/${yId[1]}?rel=0&modestbranding=1&autoplay=1" allowfullscreen></iframe></div></div>`;
+        else { let dId = getDriveId(vLink); if (dId) mediaHtml = `<div class="detail-media-box"><div class="media-wrapper video-wrapper"><div class="drive-mask"></div><iframe src="https://drive.google.com/file/d/${dId}/preview" allowfullscreen></iframe></div></div>`; }
+    } else if (fLink) {
+        let dId = getDriveId(fLink);
+        if (dId) {
+            if (r[6] === 'Bài viết' || r[6] === 'STEM' || fLink.toLowerCase().includes('.pdf')) mediaHtml = `<div class="pdf-lock-container"><div class="pdf-mask-overlay"></div><iframe src="https://drive.google.com/file/d/${dId}/preview" class="pdf-viewer-fixed" allowfullscreen></iframe></div>`;
+            else mediaHtml = `<div class="detail-media-box text-center"><img src="https://lh3.googleusercontent.com/d/${dId}" class="detail-img-fit" id="targetImg"><button class="rotate-btn" onclick="rotateImage()"><i class="bi bi-arrow-clockwise"></i> Xoay Ảnh</button></div>`;
+        }
+    }
+    $('#detMedia').html(mediaHtml);
+    let content = (type === 'K') ? r[9] : r[7];
+    $('#detContent').attr('class', (type === 'D') ? 'detail-body-text diary-lined-paper' : 'detail-body-text').html(content);
+    if (type === 'D') {
+        let randomWave = WAVE_MESSAGES[Math.floor(Math.random() * WAVE_MESSAGES.length)];
+        $('#responseSection').attr('class', 'response-wave p-4').html(`<h6 class="fw-bold mb-3" style="color: #154295;"><i class="bi bi-water"></i> Sóng hồi đáp từ đảo xa:</h6><div class="p-3 rounded-3 shadow-sm" style="background: rgba(21, 66, 149, 0.05); font-style: italic; border-left: 5px solid #154295; font-size: 1.1rem; color: #2c3e50;">"${randomWave}"</div><div class="text-end mt-2 small text-muted">Trân trọng từ các chiến sĩ Trường Sa</div>`);
+    } else {
+        $('#responseSection').attr('class', 'comment-section-v2 p-4').html(`<h6 class="fw-bold mb-3"><i class="bi bi-chat-dots-fill text-primary"></i> Lời nhắn gửi từ đất liền:</h6><div id="commentList" class="mb-3" style="max-height: 250px; overflow-y: auto;"></div><div class="row g-2"><div class="col-4"><input type="text" id="cmtName" class="form-control form-control-sm" placeholder="Tên bạn"></div><div class="col-8"><div class="input-group input-group-sm"><input type="text" id="cmtContent" class="form-control" placeholder="Viết bình luận..."><button class="btn btn-primary" onclick="submitComment('K', '${r[0]}')"><i class="bi bi-send"></i></button></div></div></div>`);
+        loadComments('K', r[0]);
+    }
+    let likes = (type === 'K') ? (r[12]||0) : (r[8]||0);
+    $('#btnLikeAction').attr('class', 'big-heart-btn').html(`<span id="modal-like-count">${likes}</span> <i class="bi bi-heart-fill"></i> GỬI YÊU THƯƠNG`);
+    $('#btnLikeAction').off('click').on('click', function(e) { createHeartBalloon(e); handleLike(type, r[0]); let currentLikes = parseInt($('#modal-like-count').text()); $('#modal-like-count').text(currentLikes + 1); });
+    new bootstrap.Modal(document.getElementById('modalDetail')).show();
+  }
+
+  function rotateImage() { currentRotation += 90; document.getElementById('targetImg').style.transform = `rotate(${currentRotation}deg)`; }
+
+  function loadComments(type, id) {
+    google.script.run.withSuccessHandler(function(comments) {
+        let html = ''; if (comments.length === 0) html = '<p class="text-muted small text-center italic py-2">Chưa có bình luận nào. Hãy là người đầu tiên!</p>';
+        else { comments.forEach(c => { html += `<div class="border-bottom pb-1 mb-2"><div class="d-flex justify-content-between align-items-center"><span class="fw-bold text-primary" style="font-size: 0.85rem;">${c.name}</span><span class="text-muted" style="font-size: 0.7rem;">${c.time}</span></div><div style="font-size: 0.9rem; color: #333;">${c.content}</div></div>`; }); }
+        $('#commentList').html(html);
+    }).getComments(type, id);
+  }
+
+  function submitComment(type, id) {
+    let name = $('#cmtName').val().trim(), content = $('#cmtContent').val().trim();
+    if (!name || !content) { Swal.fire('Thông báo', 'Vui lòng nhập tên và nội dung bình luận!', 'warning'); return; }
+    const btn = event.currentTarget; const originalHtml = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    google.script.run.withSuccessHandler(function() { Swal.fire({ title: 'Thành công!', text: 'Cảm ơn bạn đã bình luận!', icon: 'success', timer: 2000, showConfirmButton: false }); $('#cmtContent').val(''); btn.disabled = false; btn.innerHTML = originalHtml; loadComments(type, id); }).saveComment({ type: type, id: id, name: name, content: content });
+  }
+
+  function getDriveId(url) { if (!url) return null; let match = url.match(/\/d\/(.+?)\/(view|edit|preview|copy)?/); if (match) return match[1]; match = url.match(/id=(.+?)(&|$)/); if (match) return match[1]; return null; }
+
+  function formatDate(dateInput) { if (!dateInput) return ""; let d = new Date(dateInput); if (isNaN(d.getTime())) return dateInput.toString().split(' ')[0]; return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`; }
+
+  function handleLike(type, rowId) {
+    google.script.run.withSuccessHandler(val => { 
+        if(type === 'K') { let item = K_DATA.find(x => x[0] === rowId); if(item) item[12] = val; } else { let item = D_DATA.find(x => x[0] === rowId); if(item) item[8] = val; }
+        renderK(K_DATA.filter(r => (CURRENT_CAT==='Tất cả'||r[6]===CURRENT_CAT))); renderD(D_DATA, SELECTED_ISLAND ? 'island-diary-list' : 'diaryDisplay');
+    }).addLike(type==='K'?'KHO_SANG_TAO':'NHAT_KY', rowId);
+  }
+
+  function createHeartBalloon(e) {
+    const x = e.clientX || (e.touches && e.touches[0].clientX); const y = e.clientY || (e.touches && e.touches[0].clientY);
+    for (let i = 0; i < 10; i++) {
+        const heart = document.createElement('i'); heart.className = 'bi bi-heart-fill floating-heart';
+        heart.style.left = (x + (Math.random() * 60 - 30)) + 'px'; heart.style.top = (y - 20) + 'px';
+        heart.style.fontSize = (Math.random() * 15 + 15) + 'px'; heart.style.color = '#ff4d4d';
+        document.body.appendChild(heart); setTimeout(() => heart.remove(), 1500);
+    }
+  }
+
+  function openIsland(name) {
+    SELECTED_ISLAND = name; const data = MAP_DATA_STORE[name]; $('#isl-name-text').text(name);
+    if (data) { let shortDesc = data[9].substring(0, 200) + "..."; $('#isl-modal-desc-short').text(`"${shortDesc}"`); $('#isl-modal-author-name').text(data[1] || "Nguyễn Khắc Duy"); }
+    else { $('#isl-modal-desc-short').text('"Thông tin về hòn đảo này đang được cập nhật..."'); $('#isl-modal-author-name').text("Đang cập nhật"); }
+    new bootstrap.Modal(document.getElementById('islandModal')).show();
+  }
+
+  function showIslandDetail() {
+    const data = MAP_DATA_STORE[SELECTED_ISLAND]; const m = bootstrap.Modal.getInstance(document.getElementById('islandModal')); if(m) m.hide(); 
+    $('.navbar').fadeOut(200); $('.page').hide(); $('#island-info-screen').fadeIn(400).scrollTop(0); $('#info-big-title').text(SELECTED_ISLAND.toUpperCase());
+    if (data) {
+        let v = data[11] || '', embed = ''; 
+        if (v.includes('youtube.com') || v.includes('youtu.be')) { let yId = v.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v\/|.*u\/\w\/|embed\/|.*v=))([^#\&\?]*)/); if (yId) embed = `<iframe src="https://www.youtube.com/embed/${yId[1]}?rel=0&modestbranding=1" frameborder="0" allowfullscreen style="width:100%; height:100%;"></iframe>`; }
+        else { let dId = getDriveId(v); if (dId) embed = `<iframe src="https://drive.google.com/file/d/${dId}/preview" frameborder="0" allowfullscreen style="width:100%; height:100%;"></iframe>`; }
+        $('#info-video-container').html(embed || '<div class="p-5 text-center text-muted">Video đang cập nhật...</div>');
+        if(data[6]) $('#info-video-badge').text(data[6]).show(); else $('#info-video-badge').hide();
+        $('#info-author-name').html(`<i class="bi bi-person-fill"></i> ${data[1] || 'Hành Trình Số'}`);
+        $('#info-author-school').html(`<i class="bi bi-house-door-fill"></i> ${data[3]} - ${data[5]}`);
+        $('#info-text-content').text(data[9]); $('#island-footprints').text(`${(parseInt(data[12]) || 0) + 1} DẤU CHÂN CHẠM ĐẢO`);
+    }
+    google.script.run.withSuccessHandler(function(newVal) { if(newVal) { $('#island-footprints').text(`${newVal} DẤU CHÂN CHẠM ĐẢO`); if(MAP_DATA_STORE[SELECTED_ISLAND]) MAP_DATA_STORE[SELECTED_ISLAND][12] = newVal; } }).logIslandVisit(SELECTED_ISLAND);
+    renderK(K_DATA.filter(r => r[8] === SELECTED_ISLAND), 'island-kho-list');
+    renderD(D_DATA.filter(r => r[6] === SELECTED_ISLAND), 'island-diary-list');
+  }
+
+  function closeIslandInfo() { SELECTED_ISLAND = ''; $('#island-info-screen').fadeOut(300, function() { $('.navbar').fadeIn(200); switchPage('map'); }); }
+
+  function refreshStats() {
+    google.script.run.withSuccessHandler(s => {
+      $('#st-visit').text(s.totalVisits); $('#st-kho').text(s.totalKho); $('#st-nk').text(s.totalNhatKy); $('#st-map').text(s.totalMapClicks);
+      const vnMap = $('#vnMapContainer'); vnMap.find('.vn-pin').remove();
+      Object.entries(s.topProvinces).forEach(([prov, count]) => { let cleanProv = prov.replace("Tỉnh ", "").replace("Thành phố ", ""); if (VN_COORDS[cleanProv]) { const pos = VN_COORDS[cleanProv]; const pin = `<div class="vn-pin" style="top:${pos.t}%; left:${pos.l}%;" data-info="${cleanProv}: ${count} bài"></div>`; vnMap.append(pin); } });
+      $('#tb-provinces').html(Object.entries(s.topProvinces).sort((a,b)=>b[1]-a[1]).slice(0,5).map(it => `<tr><td><i class="bi bi-geo-alt-fill text-danger"></i> ${it[0]}</td><td class="text-end fw-bold text-warning">${it[1]}</td></tr>`).join(''));
+      $('#tb-schools').html(Object.entries(s.topSchools).sort((a,b)=>b[1]-a[1]).slice(0,5).map(it => `<tr><td><i class="bi bi-house-door text-gold me-2"></i> ${it[0]}</td><td class="text-end fw-bold text-warning">${it[1]}</td></tr>`).join(''));
+      $('#tb-users').html(s.topIndividuals.map(u => `<tr><td><div class="fw-bold">${u.name}</div><div class="small text-white-50">${u.school}</div></td><td class="text-end text-danger fw-bold">${u.likes} ❤️</td></tr>`).join(''));
+    }).getDashboardStats();
+  }
+
+  function handleSearch(t) {
+    let q = (t === 'K' ? $('#searchKho').val() : $('#searchDiary').val()).toLowerCase();
+    if (t === 'K') renderK(K_DATA.filter(r => (CURRENT_CAT==='Tất cả'||r[6]===CURRENT_CAT) && (r[1]+r[3]+r[7]).toLowerCase().includes(q)));
+    else renderD(D_DATA.filter(r => (r[1]+r[2]+r[3]+r[5]+r[6]).toLowerCase().includes(q)));
+  }
+
+  function handleSearchDiary() { let q = $('#searchDiary').val().toLowerCase(); renderD(D_DATA.filter(r => (r[1]+r[3]+r[6]+r[7]).toLowerCase().includes(q))); }
+
+  function filterKho(cat, el) { CURRENT_CAT = cat; $('.filter-pill').removeClass('active'); $(el).addClass('active'); handleSearch('K'); }
+
+  $('#formEntry').on('submit', function(e) {
+    e.preventDefault(); $('#loadingOverlay').show();
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modalEntry')); if(modal) modal.hide();
+    const fileInput = this.file.files[0]; const formData = Object.fromEntries(new FormData(this)); delete formData.file;
+    const success = (res) => { $('#loadingOverlay').hide(); Swal.fire('Thành công!', 'Tác phẩm đã cập bến!', 'success'); $('#formEntry')[0].reset(); refresh(); };
+    if (fileInput) { const reader = new FileReader(); reader.onload = function(e) { formData.fileBlob = { data: e.target.result.split(',')[1], contentType: fileInput.type, fileName: fileInput.name }; google.script.run.withSuccessHandler(success).uploadEntryPro(formData); }; reader.readAsDataURL(fileInput); }
+    else { google.script.run.withSuccessHandler(success).uploadEntryPro(formData); }
+  });
+
+  $('#formDiary').on('submit', function(e) {
+    e.preventDefault(); $('#loadingOverlay').show();
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modalDiary')); if(modal) modal.hide();
+    const dataDiary = { hoTen: this.hoTen.value, lop: this.lop.value, truong: this.truong.value, xaPhuong: this.xaPhuong.value, tinhThanh: this.tinhThanh.value, diemDao: this.diemDao.value, noiDung: this.noiDung.value };
+    google.script.run.withSuccessHandler((res) => { $('#loadingOverlay').hide(); Swal.fire('Thành công', 'Nhật ký đã được gửi!', 'success'); $('#formDiary')[0].reset(); refresh(); }).saveDiary(dataDiary); 
+  });
+</script>
+
+<footer id="main-footer" style="display:none; background: var(--dark); border-top: 1px solid var(--gold); padding: 20px 0; margin-top: 50px;">
+  <div class="container text-center">
+    <h6 class="fw-bold text-white mb-1" style="letter-spacing: 1px; font-size: 0.9rem;">CHẠM VÀO TRƯỜNG SA</h6>
+    <p class="text-gold mb-2" style="font-family: 'Pattaya', sans-serif; font-size: 0.8rem; margin-bottom: 5px;">
+      Chạm vào biển, đảo quê hương - Chạm vào trái tim Việt Nam
+    </p>
+    <div class="mb-2" style="color: rgba(255,255,255,0.4); font-size: 0.7rem;">
+      Bản quyền thuộc về <b>Hành trình số Việt Nam MyLove</b>
+    </div>
+    <a href="https://www.facebook.com/groups/1801935770443791" target="_blank" class="btn btn-outline-warning btn-sm rounded-pill px-3 py-1" style="font-size: 0.7rem;">
+      <i class="bi bi-facebook me-1"></i> GROUP FACEBOOK
+    </a>
+  </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
